@@ -274,6 +274,12 @@ export class Renderer {
 		for (let p in labels) {
 			labels[p] = labels[p].join(" - ");
 		};
+		
+		// Max rolls
+		const max = (await Promise.all([
+			{roll: baseRoll ? new Roll(baseRoll.formula).evaluate({maximize:true, async: true}).total : null,
+			crit: critRoll ? new Roll(critRoll.formula).evaluate({maximize:true, async: true}).total : null}
+		]))[0]
 
 		return renderModuleTemplate("red-damageroll.html", {
 			id: properties.id,
@@ -288,8 +294,8 @@ export class Renderer {
 			damagebottom: labels[3],
 			formula: baseRoll?.formula ?? critRoll.formula,
 			damageType,
-			maxRoll: baseRoll ? new Roll(baseRoll.formula).evaluate({maximize:true, async: false}).total : null,
-			maxCrit: critRoll ? new Roll(critRoll.formula).evaluate({maximize:true, async: false}).total : null
+			maxRoll: max.roll,
+			maxCrit: max.crit
 		});
 	}
 

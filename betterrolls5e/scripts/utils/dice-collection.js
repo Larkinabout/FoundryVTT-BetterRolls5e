@@ -5,14 +5,14 @@ import { Utils } from "./utils.js";
  * that will be flushed to a system like Dice So Nice.
  */
 export class DiceCollection {
-	/** Roll object containing all the dice */
-	pool = new Roll("0").roll({async: false});
-
 	/**
 	 * Creates a new DiceCollection object
 	 * @param {...Roll} initialRolls optional additional dice to start with
 	 */
 	constructor(...initialRolls) {
+		/** Roll object containing all the dice */
+		this.pool = undefined
+		this.pop()
 		if (initialRolls.length > 0) {
 			this.push(...initialRolls);
 		}
@@ -47,7 +47,7 @@ export class DiceCollection {
 	 */
 	async flush({ hasMaestroSound=false, whisperData=null }) {
 		// Get and reset immediately (stacking flush calls shouldn't roll more dice)
-		const pool = this.pop();
+		const pool = await this.pop();
 
 		const hasDice = pool.dice.length > 0;
 		if (game.dice3d && hasDice) {
@@ -73,9 +73,9 @@ export class DiceCollection {
 	 * Retrieves the dice pool and clears it without rolling it.
 	 * @returns {Roll}
 	 */
-	pop() {
+	async pop() {
 		const pool = this.pool;
-		this.pool = new Roll("0").roll({async: false});
+		this.pool = await new Roll("0").roll({async: true});
 		return pool;
 	}
 }

@@ -46,9 +46,9 @@ export class RollFields {
 	 * @param {boolean?} options.elvenAccuracy whether the actor should apply elven accuracy
 	 * @param {boolean?} options.forceCrit optional flag to force a crit result
 	 * @param {BRSettings} options.settings additional settings to override
-	 * @returns {import("./renderer.js").MultiRollDataProps}
+	 * @returns {Promise<Array<import("./renderer.js").MultiRollDataProps>>}
 	 */
-	static constructMultiRoll(options={}) {
+	static async constructMultiRoll(options={}) {
 		const { critThreshold, title, rollType, elvenAccuracy } = options;
 		if (!options.formula) {
 			console.error("No formula given for multi-roll");
@@ -81,12 +81,12 @@ export class RollFields {
 			const fullRoll = new Roll(formula);
 			const baseRoll = new Roll(fullRoll.terms[0].formula ?? fullRoll.terms[0]);
 			const bonusRollFormula = [...fullRoll.terms.slice(1).map(t => t.formula ?? t)].join(' ') || "0";
-			const bonusRoll = new Roll(bonusRollFormula).roll({async: false});
+			const bonusRoll = await new Roll(bonusRollFormula).roll({async: true});
 
 			// Populate the roll entries
 			const entries = [];
 			for (let i = 0; i < numRolls; i++) {
-				entries.push(Utils.processRoll(baseRoll.reroll({async: false}), critThreshold, [20], bonusRoll));
+				entries.push(Utils.processRoll(await baseRoll.reroll({async: true}), critThreshold, [20], bonusRoll));
 			}
 
 			// Mark ignored rolls if advantage/disadvantage
@@ -174,7 +174,7 @@ export class RollFields {
 		}
 
 		// Construct the multiroll
-		return RollFields.constructMultiRoll({
+		return await RollFields.constructMultiRoll({
 			...options,
 			formula: roll,
 			rollState,
@@ -200,9 +200,9 @@ export class RollFields {
 	 * @param {boolean?} options.isCrit Whether to roll crit damage
 	 * @param {number?} options.extraCritDice sets the savage property. Falls back to using the item if not given, or false otherwise.
 	 * @param {BRSettings} options.settings Override config to use for the roll
-	 * @returns {import("./renderer.js").DamageDataProps}
+	 * @returns {Promise<Array<import("./renderer.js").DamageDataProps>>}
 	 */
-	static constructDamageRoll(options={}) {
+    static async constructDamageRoll(options={}) {
 		const { item, damageIndex, slotLevel, isCrit } = options;
 		const actor = options?.actor ?? item?.actor;
 		const isVersatile = damageIndex === "versatile";
@@ -270,14 +270,14 @@ export class RollFields {
 		// Assemble roll data and defer to the general damage construction
 		try {
 			const rollFormula = [formula, ...parts].join("+");
-			const baseRoll = new Roll(rollFormula, rollData).roll({async: false});
+			const baseRoll = await new Roll(rollFormula, rollData).roll({async: true});
 			const total = baseRoll.total;
 
 			// Roll crit damage if relevant
 			let critRoll = null;
 			if (damageIndex !== "other") {
 				if (isCrit && critBehavior !== "0") {
-					critRoll = ItemUtils.getCritRoll(baseRoll.formula, total, { settings, extraCritDice });
+					critRoll = await ItemUtils.getCritRoll(baseRoll.formula, total, { settings, extraCritDice });
 				}
 			}
 
@@ -310,9 +310,9 @@ export class RollFields {
 	 * @param {string?} options.damageType
 	 * @param {string?} options.title title to display. If not given defaults to damage type
 	 * @param {BRSettings} options.settings Override config to use for the roll
-	 * @returns {import("./renderer.js").DamageDataProps}
+	 * @returns {Promise<Array<import("./renderer.js").DamageDataProps>>}
 	 */
-	static constructCritDamageRoll(options={}) {
+	static async constructCritDamageRoll(options={}) {
 		const { item, slotLevel } = options;
 		const actor = options?.actor ?? item?.actor;
 		const rollData = item ?
@@ -337,7 +337,7 @@ export class RollFields {
 
 		// Assemble roll data and defer to the general damage construction
 		try {
-			const critRoll = new Roll(formula, rollData).roll({async: false});
+			const critRoll = await new Roll(formula, rollData).roll({async: true});
 
 			return {
 				type: "crit",
@@ -360,9 +360,9 @@ export class RollFields {
 	 * @param {number[] | "all" | number} options.index one more or damage indices to roll for.
 	 * @param {boolean?} options.versatile should the first damage entry be replaced with versatile
 	 * @param {BRSettings} options.settings Override settings to use for the roll
-	 * @returns {import("./renderer.js").DamageDataProps[]}
+	 * @returns {Promise<Array<import("./renderer.js").DamageDataProps[]>>}
 	 */
-	static constructItemDamageRange(options={}) {
+	static async constructItemDamageRange(options={}) {
 		let index = options.index;
 		const { formula, item } = options;
 
@@ -377,8 +377,8 @@ export class RollFields {
 				console.error("BetterRolls | Missing damage index on item range roll...invalid data");
 				return [];
 			}
-
-			return [RollFields.constructDamageRoll({ ...options, damageIndex })].filter(d => d);
+			
+			return [await RollFields.constructDamageRoll({ ...options, damageIndex })].filter(d => d);
 		}
 
 		const wasAll = index === "all";
@@ -394,8 +394,8 @@ export class RollFields {
 			index = index.map(i => i === 0 ? "versatile" : i);
 		}
 
-		return index.map(i => {
-			return RollFields.constructDamageRoll({...options, item, damageIndex: i});
+		return await index.map(i => {
+			return RollFields.constructDamageRoll({ ...options, item, damageIndex: i });
 		}).filter(d => d);
 	}
 
@@ -439,14 +439,14 @@ export class RollFields {
 			case 'toolcheck':
 			case 'tool':
 			case 'check':
-				return [RollFields.constructMultiRoll({
+				return [await RollFields.constructMultiRoll({
 					...data,
 					formula: data.formula ?? (await ItemUtils.getToolRoll(data.item, data.bonus)).formula,
 				})];
 			case 'damage':
-				return RollFields.constructItemDamageRange(data);
+				return await RollFields.constructItemDamageRange(data);
 			case 'other':
-				return RollFields.constructItemDamageRange({ ...data, damageIndex: "other" });
+				return await RollFields.constructItemDamageRange({ ...data, damageIndex: "other" });
 			case 'ammo':
 				if (!data.ammo) return [];
 
@@ -456,7 +456,7 @@ export class RollFields {
 					return [];
 				}
 
-				return RollFields.constructItemDamageRange({
+				return await RollFields.constructItemDamageRange({
 					...data,
 					item: ammo,
 					index: "all",
@@ -479,7 +479,7 @@ export class RollFields {
 				const { title, rolls, formula, rollState } = data;
 				const rollData = Utils.getRollData({ item, actor });
 				const resolvedFormula = new Roll(formula, rollData).formula;
-				return [RollFields.constructMultiRoll({
+				return [await RollFields.constructMultiRoll({
 					title, rollState,
 					formula: resolvedFormula || "1d20",
 					numRolls: rolls || 1,
@@ -507,7 +507,7 @@ export class RollFields {
 				}
 				break;
 			case 'crit':
-				return [RollFields.constructCritDamageRoll({ item, ...data })];
+				return [await RollFields.constructCritDamageRoll({ item, ...data })];
 		}
 
 		return [];

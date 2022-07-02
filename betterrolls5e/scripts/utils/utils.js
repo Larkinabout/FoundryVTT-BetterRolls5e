@@ -10,7 +10,7 @@ export const dnd5e = DND5E;
  * @param {string} key
  * @param {object?} data optional data that if given will do a format() instead
  */
-export function i18n(key, data=null) {
+export function i18n(key, data = null) {
 	if (data) {
 		return game.i18n.format(key, data);
 	}
@@ -23,9 +23,11 @@ export function i18n(key, data=null) {
  */
 function isMaestroOn() {
 	let output = false;
-	try { if (game.settings.get("maestro", "enableItemTrack")) {
-		output = true;
-	} }
+	try {
+		if (game.settings.get("maestro", "enableItemTrack")) {
+			output = true;
+		}
+	}
 	catch { return false; }
 	return output;
 }
@@ -42,7 +44,7 @@ export class Utils {
 	 * @param {boolean} hasMaestroSound optional parameter to denote that maestro is enabled
 	 * @returns {string}
 	 */
-	static getDiceSound(hasMaestroSound=false) {
+	static getDiceSound(hasMaestroSound = false) {
 		const playRollSounds = game.settings.get("betterrolls5e", "playRollSounds");
 		if (playRollSounds && !game.dice3d?.isEnabled() && !hasMaestroSound) {
 			return CONFIG.sounds.dice;
@@ -67,9 +69,9 @@ export class Utils {
 		let blind = null;
 
 		rollMode = rollMode || game.settings.get("core", "rollMode");
-		if ( ["gmroll", "blindroll"].includes(rollMode) ) whisper = ChatMessage.getWhisperRecipients("GM");
-		if ( rollMode === "blindroll" ) blind = true;
-		else if ( rollMode === "selfroll" ) whisper = [game.user.id];
+		if (["gmroll", "blindroll"].includes(rollMode)) whisper = ChatMessage.getWhisperRecipients("GM");
+		if (rollMode === "blindroll") blind = true;
+		else if (rollMode === "selfroll") whisper = [game.user.id];
 
 		return { rollMode, whisper, blind }
 	}
@@ -81,7 +83,7 @@ export class Utils {
 	 * @param {boolean|number[]} critChecks dice to test, true for all
 	 * @param {Roll?} bonus optional bonus roll to add to the total
 	 */
-	static processRoll(roll, threshold, critChecks=true, bonus=null) {
+	static processRoll(roll, threshold, critChecks = true, bonus = null) {
 		if (!roll) return null;
 
 		let high = 0;
@@ -119,13 +121,13 @@ export class Utils {
 	/**
 	 * Returns an {advantage, disadvantage} object when given an event.
 	 */
-	static eventToAdvantage(ev={}) {
+	static eventToAdvantage(ev = {}) {
 		if (ev.shiftKey) {
-			return {advantage: 1, disadvantage:0};
+			return { advantage: 1, disadvantage: 0 };
 		} else if (ev.ctrlKey || ev.metaKey) {
-			return {advantage: 0, disadvantage:1};
+			return { advantage: 0, disadvantage: 1 };
 		} else {
-			return {advantage: 0, disadvantage:0};
+			return { advantage: 0, disadvantage: 0 };
 		}
 	}
 
@@ -134,7 +136,7 @@ export class Utils {
 	 * @param {object} param0
 	 * @returns {import("../fields.js").RollState}
 	 */
-	static getRollState({rollState=null, event=null, advantage=null, disadvantage=null, adv=null, disadv=null}={}) {
+	static getRollState({ rollState = null, event = null, advantage = null, disadvantage = null, adv = null, disadv = null } = {}) {
 		if (rollState) return rollState;
 		if (advantage || adv) return "highest";
 		if (disadvantage || disadv) return "lowest";
@@ -170,7 +172,7 @@ export class Utils {
 	 * Returns the item's roll data first, and then falls back to actor
 	 * @returns {object}
 	 */
-	static getRollData({item = null, actor = null, abilityMod, slotLevel=undefined}) {
+	static getRollData({ item = null, actor = null, abilityMod, slotLevel = undefined }) {
 		return item ?
 			ItemUtils.getRollData(item, { abilityMod, slotLevel }) :
 			actor?.getRollData() ?? {};
@@ -180,7 +182,7 @@ export class Utils {
 	 * Retrieves all tokens currently selected on the canvas. This is the normal select,
 	 * not the target select.
 	 */
-	static getTargetTokens({required=false}={}) {
+	static getTargetTokens({ required = false } = {}) {
 		const character = game.user.character;
 		const controlled = canvas.tokens.controlled;
 		if (!controlled.length && character) {
@@ -199,8 +201,8 @@ export class Utils {
 	 * Returns all selected actors
 	 * @param param1.required True if a warning should be shown if the list is empty
 	 */
-	static getTargetActors({required=false}={}) {
-		return Utils.getTargetTokens({required}).map(character => character.actor).filter(a => a);
+	static getTargetActors({ required = false } = {}) {
+		return Utils.getTargetTokens({ required }).map(character => character.actor).filter(a => a);
 	}
 
 	/**
@@ -259,8 +261,8 @@ export class Utils {
 		const rollState = d20Term.modifiers.includes("kh")
 			? "highest"
 			: d20Term.modifiers.includes("kl")
-			? "lowest"
-			: null;
+				? "lowest"
+				: null;
 
 		// Remove the advantage/disadvantage from the attack roll
 		// At least in the current version of foundry, the formula is not cached
@@ -343,7 +345,7 @@ export class ActorUtils {
 		const actorImage = (actor.data.img && actor.data.img !== CONST.DEFAULT_TOKEN && !actor.data.img.includes("*")) ? actor.data.img : false;
 		const tokenImage = actor.token?.data?.img ? actor.token.data.img : actor.data.token.img;
 
-		switch(game.settings.get("betterrolls5e", "defaultRollArt")) {
+		switch (game.settings.get("betterrolls5e", "defaultRollArt")) {
 			case "actor":
 				return actorImage || tokenImage;
 			case "token":
@@ -426,7 +428,7 @@ export class ItemUtils {
 	}
 
 	static getDuration(item) {
-		const {duration} = item.data.data;
+		const { duration } = item.data.data;
 
 		if (!duration?.units) {
 			return null;
@@ -517,7 +519,7 @@ export class ItemUtils {
 
 			// Make quickDamage flags if they don't exist
 			if (!flags.quickDamage) {
-				flags.quickDamage = {type: "Array", value: [], altValue: []};
+				flags.quickDamage = { type: "Array", value: [], altValue: [] };
 			}
 
 			for (let i = 0; i < itemData.data.damage?.parts.length; i++) {
@@ -567,7 +569,7 @@ export class ItemUtils {
 	 * This uses item.getRollData(), but allows overriding with additional properties
 	 * @param {*} item
 	 */
-	static getRollData(item, { abilityMod, slotLevel=undefined } = {}) {
+	static getRollData(item, { abilityMod, slotLevel = undefined } = {}) {
 		const rollData = item.getRollData();
 		if (rollData) {
 			const abl = abilityMod ?? item?.abilityMod;
@@ -643,35 +645,35 @@ export class ItemUtils {
 	 * @param {number?} param2.critDice extra crit dice
 	 * @returns {Roll | null} the crit result, or null if there is no dice
 	 */
-	static getCritRoll(baseFormula, baseTotal, {settings=null, extraCritDice=null}={}) {
+	static async getCritRoll(baseFormula, baseTotal, { settings=null, extraCritDice=null } = {} ) {
 		let critRoll = ItemUtils.getBaseCritRoll(baseFormula);
 		if (!critRoll) return null;
 
 		critRoll.alter(1, extraCritDice ?? 0);
-		critRoll.roll({async: false});
+		await critRoll.roll({ async: true });
 
 		const { critBehavior } = getSettings(settings);
 
 		// If critBehavior = 2, maximize base dice
 		if (critBehavior === "2") {
-			critRoll = new Roll(critRoll.formula).evaluate({maximize:true, async: false});
+			critRoll = await new Roll(critRoll.formula).evaluate({ maximize: true, async: true });
 		}
 
 		// If critBehavior = 3, maximize base and maximize crit dice
 		// Need to get the difference because we're not able to change the base roll from here so we add it to the critical roll
 		else if (critBehavior === "3") {
-			let maxDifference = new Roll(baseFormula).evaluate({maximize:true, async: false}).total - baseTotal;
+			let maxDifference = await new Roll(baseFormula).evaluate({ maximize: true, async: true }).total - baseTotal;
 			let newFormula = critRoll.formula + "+" + maxDifference.toString();
-			critRoll = new Roll(newFormula).evaluate({maximize:true, async: false});
+			critRoll = await new Roll(newFormula).evaluate({ maximize: true, async: true });
 		}
 
 		// If critBehavior = 4, maximize base dice and roll crit dice
 		// Need to get the difference because we're not able to change the base roll from here so we add it to the critical roll
 		else if (critBehavior === "4") {
-			let maxRoll = new Roll(baseFormula).evaluate({maximize:true, async: false});
+			let maxRoll = await new Roll(baseFormula).evaluate({ maximize: true, async: true});
 			let maxDifference = maxRoll.total - baseTotal;
 			let newFormula = critRoll.formula + "+" + maxDifference.toString();
-			critRoll = new Roll(newFormula).evaluate({async: false});
+			critRoll = await new Roll(newFormula).evaluate({ async: true });
 		}
 
 		return critRoll;
@@ -727,7 +729,7 @@ export class ItemUtils {
 		const activation = ItemUtils.getActivationData(item)
 		const duration = ItemUtils.getDuration(item);
 
-		switch(item.data.type) {
+		switch (item.data.type) {
 			case "weapon":
 				properties = [
 					dnd5e.weaponTypes[data.weaponType],
