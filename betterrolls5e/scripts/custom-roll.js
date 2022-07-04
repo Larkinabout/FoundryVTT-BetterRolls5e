@@ -129,7 +129,7 @@ let defaultParams = {
 	event: null,
 	advantage: 0,
 	disadvantage: 0,
-	consume: true,
+	consume: false,
 	infoOnly: false,
 };
 
@@ -254,7 +254,7 @@ export class CustomItemRoll {
 	 */
 	async getItem() {
 		if (this._item) return this._item;
-
+ 
 		let storedData = null;
 		if (this.messageId) {
 			const message = game.messages.get(this.messageId);
@@ -625,17 +625,17 @@ export class CustomItemRoll {
 
 		// Get Params
 		const params = this.params;
-		const consume = params.consume;
+		let consume = params.consume;
 		let placeTemplate = params.useTemplate;
 
 		// Determine spell level and configuration settings
-		if (item?.data.type === "spell" && consume && !params.slotLevel) {
+		if (item?.data.type === "spell" && !params.slotLevel) {
 			const config = await this.configureSpell();
 			if (config === "error") {
 				this.error = true;
 				return;
 			}
-
+			consume = config.consume;
 			placeTemplate = config.placeTemplate;
 		}
 
@@ -684,15 +684,16 @@ export class CustomItemRoll {
 		let ammoUpdate = null;
 		if (actor && item) {
 			const request = this.params.useCharge;
-			const consume = item.data.data.consume;
-			if (request.resource && consume?.type === "ammo") {
-				ammo = actor.items.get(consume.target);
+			const itemDataConsume = item.data.data.consume;
+			if (request.resource && itemDataConsume?.type === "ammo") {
+				ammo = actor.items.get(itemDataConsume.target);
 				const usage = item._getUsageUpdates({consumeResource: true});
 				if (usage === false) {
 					this.error = true;
 					return;
 				}
 				ammoUpdate = usage.resourceUpdates || [];
+				consume = true;
 			}
 		}
 
