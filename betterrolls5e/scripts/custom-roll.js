@@ -167,6 +167,8 @@ export class CustomItemRoll {
 			const { item, actor } = Utils.resolveActorOrItem(itemOrActor);
 			if (item) {
 				this.item = item;
+				// Remove item id where item does not exist on actor
+				if (this._actor && !this._actor?.items.get(this.itemId)) this._item.data._id = null
 			} else if (actor) {
 				this.actor = actor;
 			}
@@ -254,7 +256,7 @@ export class CustomItemRoll {
 	 */
 	async getItem() {
 		if (this._item) return this._item;
- 
+
 		let storedData = null;
 		if (this.messageId) {
 			const message = game.messages.get(this.messageId);
@@ -267,7 +269,7 @@ export class CustomItemRoll {
 
 		const actor = await this.getActor();
 		const Item5e = game.dnd5e.entities.Item5e;
-		const item = storedData && actor ? Item5e.createOwned(storedData, actor) : actor?.items.get(this.itemId);
+		const item = storedData && actor ? await new CONFIG.Item.documentClass(storedData, { parent: actor }) : actor?.items.get(this.itemId);
 		if (item) {
 			console.info(`BetterRolls | Card loaded existing item data ${item.name}`);
 		}
