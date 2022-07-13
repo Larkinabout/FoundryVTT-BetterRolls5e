@@ -687,15 +687,17 @@ export class CustomItemRoll {
 		if (actor && item) {
 			const request = this.params.useCharge;
 			const itemDataConsume = item.data.data.consume;
-			if (request.resource && itemDataConsume?.type === "ammo") {
-				ammo = actor.items.get(itemDataConsume.target);
-				const usage = item._getUsageUpdates({consumeResource: true});
-				if (usage === false) {
-					this.error = true;
-					return;
-				}
-				ammoUpdate = usage.resourceUpdates || [];
+			if (request.resource && itemDataConsume?.type) {
 				consume = true;
+				if (itemDataConsume?.type === "ammo") {
+					ammo = actor.items.get(itemDataConsume.target);
+					const usage = item._getUsageUpdates({consumeResource: true});
+					if (usage === false) {
+						this.error = true;
+						return;
+					}
+					ammoUpdate = usage.resourceUpdates || [];
+				}
 			}
 		}
 
