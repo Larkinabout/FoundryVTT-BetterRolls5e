@@ -687,7 +687,8 @@ export class CustomItemRoll {
 		if (actor && item) {
 			const request = this.params.useCharge;
 			const itemDataConsume = item.data.data.consume;
-			if (request.resource && itemDataConsume?.type) {
+			const itemDataUses = item.data.data.uses;
+			if (request.resource && itemDataConsume?.type || request.use && itemDataUses.value) {
 				consume = true;
 				if (itemDataConsume?.type === "ammo") {
 					ammo = actor.items.get(itemDataConsume.target);
